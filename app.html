@@ -1,5 +1,16 @@
 import random
 
+# ANSI color codes
+class Color:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
 #Set up Monster class
 class Monster:
   def __init__(self, name, clan, level):
@@ -12,7 +23,7 @@ class Monster:
   
   #Monster representation line
   def __repr__(self):
-    return 'You are facing a level {level} {name}. {name} will deal [{dmg} damage] and has |{health}HP| left.'.format(level = self.level, name = self.name, dmg = self.attack, health = self.health)
+    return Color.OKBLUE + 'You are facing a level {level} {name}. {name} will deal [{dmg} damage] and has |{health}HP| left.'.format(level = self.level, name = self.name, dmg = self.attack, health = self.health) + Color.ENDC
 
   #What should happen when a monster dies
   def dead(self, player):
@@ -27,7 +38,7 @@ class Monster:
     if self.clan == 'Skeleton':
       skelly = random.randint(1, 2)
       if skelly == 1:
-        print('*The enemy dropped a potion!*')
+        print(Color.OKGREEN + '*The enemy dropped a potion!*' + Color.ENDC)
         player.potions += 1
         if player.potions > 15:
           player.potions = 15
@@ -36,7 +47,7 @@ class Monster:
     if self.clan == 'Ogre':
       ogre = random.randint(1, 3)
       if ogre == 1:
-        print('*The Ogre dropped 3 potions!!!*')
+        print(Color.OKGREEN + '*The Ogre dropped 3 potions!!!*' + Color.ENDC)
         player.potions += 3
         if player.potions > 15:
           player.potions = 15
@@ -45,12 +56,12 @@ class Monster:
     else:
       potty = random.randint(1, 2)
       if potty == 1:
-        print('*The enemy dropped a potion!*')
+        print(Color.OKGREEN + '*The enemy dropped a potion!*' + Color.ENDC)
         player.potions += 1
         if player.potions > 15:
           player.potions = 15
       player.exp += int(self.level * 10)
-    print('# {name} has been defeated! Your hero has gained some XP! #'.format(name = self.name))
+    print(Color.OKGREEN + '# {name} has been defeated! Your hero has gained some XP! #'.format(name = self.name) + Color.ENDC)
     player.lvl_up()
     
   #What should happen when a monster takes damage
@@ -61,12 +72,12 @@ class Monster:
       self.health = 0
       self.dead(player)
     else:
-      print('|{name} is down to {health}HP|'.format(name = self.name, health = self.health))
+      print(Color.WARNING + '|{name} is down to {health}HP|'.format(name = self.name, health = self.health) + Color.ENDC)
 
   #What should happen when a monster deals damage
   def deal_damage(self, player):
     dam = self.attack
-    print('[{name} attacked {player} for {damage} damage!]'.format(name = self.name, player = player.name, damage = self.attack))
+    print(Color.FAIL + '[{name} attacked {player} for {damage} damage!]'.format(name = self.name, player = player.name, damage = self.attack) + Color.ENDC)
     player.take_damage(dam)
 
 #Set up hero class
@@ -85,11 +96,11 @@ class Hero:
   #Hero representation line
   def __repr__(self):
     if wep_choice == wep1:
-      return 'Your hero {name} is level {lvl}, currently does [{dmg} damage], and has |{health}/{maxhp}HP|.'.format(name = self.name, lvl = self.level, dmg = self.attack * int(round(self.level * .8, 0)), health = self.health, maxhp = self.max_health)
+      return Color.OKBLUE + 'Your hero {name} is level {lvl}, currently does [{dmg} damage], and has |{health}/{maxhp}HP|.'.format(name = self.name, lvl = self.level, dmg = self.attack * int(round(self.level * .8, 0)), health = self.health, maxhp = self.max_health) + Color.ENDC
     if wep_choice == wep2:
-      return 'Your hero {name} is level {lvl}, currently does [{dmg} damage], and has |{health}/{maxhp}HP|.'.format(name = self.name, lvl = self.level, dmg = self.attack * int(round(self.level * .7, 0)), health = self.health, maxhp = self.max_health)
+      return Color.OKBLUE + 'Your hero {name} is level {lvl}, currently does [{dmg} damage], and has |{health}/{maxhp}HP|.'.format(name = self.name, lvl = self.level, dmg = self.attack * int(round(self.level * .7, 0)), health = self.health, maxhp = self.max_health) + Color.ENDC
     if wep_choice == wep3:
-      return 'Your hero {name} is level {lvl}, currently does [{dmg} damage], and has |{health}/{maxhp}HP|.'.format(name = self.name, lvl = self.level, dmg = self.attack* int(round(self.level * .6, 0)), health = self.health, maxhp = self.max_health)
+      return Color.OKBLUE + 'Your hero {name} is level {lvl}, currently does [{dmg} damage], and has |{health}/{maxhp}HP|.'.format(name = self.name, lvl = self.level, dmg = self.attack* int(round(self.level * .6, 0)), health = self.health, maxhp = self.max_health) + Color.ENDC
 
   #What should happen when the hero dies
   def dead(self):
@@ -97,7 +108,7 @@ class Hero:
     self.is_dead = True
     if self.health != 0:
       self.health = 0
-    print('\nOh no! Your hero {name} has been defeated! Better luck next time!'.format(name = self.name))
+    print('\n' + Color.FAIL + 'Oh no! Your hero {name} has been defeated! Better luck next time!'.format(name = self.name) + Color.ENDC)
 
   #What should happen when the hero levels up
   def lvl_up(self):
@@ -118,7 +129,7 @@ class Hero:
       #Set limit on max potions
       if self.potions > 15:
         self.potions = 15
-      print('*Congratulations, your hero is now level {level}!* \n{name}\'s damage and max health has been increased! \n{name} has gained 2 potions and a third of their health has been restored!'.format(level = self.level, name = self.name))
+        print(Color.OKGREEN + '*Congratulations, your hero is now level {level}!* \n{name}\'s damage and max health has been increased! \n{name} has gained 2 potions and a third of their health has been restored!'.format(level = self.level, name = self.name) + Color.ENDC)
     else:
       print('{name} now needs {exp} more XP to level up'.format(name = self.name, exp = int(200 - self.exp)))
 
@@ -130,7 +141,7 @@ class Hero:
       self.health = 0
       self.dead()
     else:
-      print('|{name} is now down to {health}HP|'.format(name = self.name, health = self.health))
+      print(Color.WARNING + '|{name} is now down to {health}HP|'.format(name = self.name, health = self.health) + Color.ENDC)
 
   #What should happen when the hero uses the block action
   def block(self, mon):
@@ -147,8 +158,8 @@ class Hero:
         self.health = 0
         self.dead()
       else:
-        print('You have succesfully blocked the attack for [{amount} damage]. \n|{name} is now down to {health}HP.|'.format(amount = amount, name = self.name, health = self.health))
-        #Monster rebound damage for succesfull block
+        print(Color.OKBLUE + 'You have successfully blocked the attack for [{amount} damage]. \n|{name} is now down to {health}HP.|'.format(amount = amount, name = self.name, health = self.health) + Color.ENDC)
+        #Monster rebound damage for successful block
         mon.take_damage(amount, self)
 
   #What should happen when the hero deals damage
@@ -165,11 +176,11 @@ class Hero:
       dam = self.attack * int(round(self.level * .6, 0))
       crit =  random.randint(1, 10)
     if crit == 1:
-      print('{Critical hit!}')
+      print(Color.FAIL + '{Critical hit!}' + Color.ENDC)
       dam = dam * 2
     else:
       dam = dam
-    print('[{name} attacked {mon} for {damage} damage!]'.format(name = self.name, mon = mon.name, damage = dam))
+    print(Color.FAIL + '[{name} attacked {mon} for {damage} damage!]'.format(name = self.name, mon = mon.name, damage = dam) + Color.ENDC)
     mon.take_damage(dam, self)
 
   #What should happen when the hero uses a potion
@@ -177,13 +188,13 @@ class Hero:
     if self.potions > 0:
       self.potions -= 1
       self.health += int(round(self.max_health * .35))
-      print('\n{name} used a health potion'.format(name = self.name))
+      print('\n' + Color.OKGREEN + '{name} used a health potion'.format(name = self.name) + Color.ENDC)
       #What should happen if healed health exceeds max health
       if self.health >= self.max_health:
         self.health = self.max_health
-      print('|{name} now has {health}HP|'.format(name = self.name, health = self.health))
+      print(Color.WARNING + '|{name} now has {health}HP|'.format(name = self.name, health = self.health) + Color.ENDC)
     else:
-      print('\nYou are out of potions :(')
+      print('\n' + Color.WARNING + 'You are out of potions :(' + Color.ENDC)
 
 #Weapon descriptions
 wep1 = ['Dagger', 1]
@@ -191,10 +202,10 @@ wep2 = ['Sword', 2]
 wep3 = ['Axe', 3]
 
 #Get user inputs for the hero's name and what weapon to start with
-name_input = input('\nHello, and welcome to The Rat Game! \nWhat name would you like to give your hero? \n> ')
-choice = input('Which weapon would you like your hero to take on their journey? \nType \'Dagger\'(1 damage, 50% crit chance), \'Sword\'(2 damage, 30% crit chance), or \'Axe\'(3 damage, 10% crit chance). \n> ').title()
+name_input = input('\n' + Color.HEADER + 'Hello, and welcome to The Rat Game! \nWhat name would you like to give your hero? \n> ' + Color.ENDC)
+choice = input(Color.HEADER + 'Which weapon would you like your hero to take on their journey? \nType \'Dagger\'(1 damage, 50% crit chance), \'Sword\'(2 damage, 30% crit chance), or \'Axe\'(3 damage, 10% crit chance). \n> ' + Color.ENDC).title()
 while choice != 'Dagger' and choice != 'Sword' and choice != 'Axe':
-  choice = input('Whoops! Looks like that wasn\'t one of the choices! \nPlease type \'Dagger\'(1 damage, 50% crit chance), \'Sword\'(2 damage, 30% crit chance), or \'Axe\'(3 damage, 10% crit chance). \n> ').title()
+  choice = input(Color.HEADER + 'Whoops! Looks like that wasn\'t one of the choices! \nPlease type \'Dagger\'(1 damage, 50% crit chance), \'Sword\'(2 damage, 30% crit chance), or \'Axe\'(3 damage, 10% crit chance). \n> ' + Color.ENDC).title()
 if choice == 'Dagger':
   wep_choice = wep1
 if choice == 'Sword':
@@ -215,9 +226,9 @@ reset = True
 #Encounter commands
 while reset == True:
   #Get user input for encounter action
-  fight = input('\n{mon} \n{hero} \nWhat will you do? Type \'Attack\', \'Block\'(75% chance to reflect half damage), or \'Heal\'(Heals |{hp}HP|: You have {pot} potions). \n> '.format(mon = mon, hero = hero, hp = int(round(hero.max_health * .35, 0)), pot = hero.potions)).title()    
+  fight = input('\n' + Color.HEADER + '{mon} \n{hero} \nWhat will you do? Type \'Attack\', \'Block\'(75% chance to reflect half damage), or \'Heal\'(Heals |{hp}HP|: You have {pot} potions). \n> '.format(mon = mon, hero = hero, hp = int(round(hero.max_health * .35, 0)), pot = hero.potions) + Color.ENDC).title()    
   while fight != 'Attack' and fight != 'Block' and fight != 'Heal':
-    fight  = input('Invalid command, please try again. \n{mon} \n{hero} \nWhat will you do? Type \'Attack\'(deal [{dmg} damage]), \'Block\'(75% chance to reflect half damage), or \'Heal\'(Heals |{hp}HP|: You have {pot} potions). \n> '.format(mon = mon, hero = hero, hp = int(round(hero.max_health * .35, 0)), pot = hero.potions, dmg = hero.attack * int(hero.level))).title()
+    fight  = input(Color.WARNING + 'Invalid command, please try again. \n{mon} \n{hero} \nWhat will you do? Type \'Attack\'(deal [{dmg} damage]), \'Block\'(75% chance to reflect half damage), or \'Heal\'(Heals |{hp}HP|: You have {pot} potions). \n> '.format(mon = mon, hero = hero, hp = int(round(hero.max_health * .35, 0)), pot = hero.potions, dmg = hero.attack * int(hero.level)) + Color.ENDC).title()
   #Determine what should happen if the attack command is chosen
   if fight == 'Attack':
     reset = False
@@ -226,16 +237,16 @@ while reset == True:
     print('\n')
     hero.deal_damage(mon)
     if mon.is_dead == False and mon_attack == False:
-      mon.deal_damage(hero)
-      #Ensures that a dead monster doesn't attack the hero
-      mon_attack = True
-    #Win condition
+          mon.deal_damage(hero)
+    # Ensures that a dead monster doesn't attack the hero
+    mon_attack = True
+    # Win condition
     if mon.is_dead == True and mon.name == 'Big Cheese':
-      print('******************************************************\nWOW! YOU DID IT! YOU BEAT THE BIG CHEESE! YOU WIN!!!!!\n******************************************************')
+      print(Color.OKGREEN + '******************************************************\nWOW! YOU DID IT! YOU BEAT THE BIG CHEESE! YOU WIN!!!!!\n******************************************************' + Color.ENDC)
       break
-    #Spawns a new enemy if the current one is dead
+    # Spawns a new enemy if the current one is dead
     while mon.is_dead == True:
-      #Determines what enemy to spawn based on hero level
+      # Determines what enemy to spawn based on hero level
       if 1 < hero.level <= 3:
         m1Lvl = random.randint(2, 5)
         mon = Monster('Skelly', 'Skeleton', m1Lvl)
@@ -250,26 +261,26 @@ while reset == True:
         mon = Monster('Greg', 'Ogre', m4Lvl)
       if hero.level > 20:
         mon = Monster('Big Cheese', 'Rat Mob', 50)
-      #Resets monster death buffer so a new one can spawn  
-      mon.is_dead == False
-    #Lose condition sequence break
+      # Resets monster death buffer so a new one can spawn
+      mon.is_dead = False
+    # Lose condition sequence break
     if hero.is_dead == True:
       break
-    #Encounter reset
+    # Encounter reset
     else:
       reset = True
-  #Determine what should happen if the block command is chosen
+  # Determine what should happen if the block command is chosen
   if fight == 'Block':
     reset = False
     print('\n')
     hero.block(mon)
-    #Win condition
+    # Win condition
     if mon.is_dead == True and mon.name == 'Big Cheese':
-      print('******************************************************\nWOW! YOU DID IT! YOU BEAT THE BIG CHEESE! YOU WIN!!!!!\n******************************************************')
+      print(Color.OKGREEN + '******************************************************\nWOW! YOU DID IT! YOU BEAT THE BIG CHEESE! YOU WIN!!!!!\n******************************************************' + Color.ENDC)
       break
-    #Spawns a new enemy if the current one is dead
+    # Spawns a new enemy if the current one is dead
     while mon.is_dead == True:
-      #Determines what enemy to spawn based on hero level
+      # Determines what enemy to spawn based on hero level
       if 1 < hero.level <= 5:
         m1Lvl = random.randint(2, 5)
         mon = Monster('Skelly', 'Skeleton', m1Lvl)
@@ -284,17 +295,19 @@ while reset == True:
         mon = Monster('Greg', 'Ogre', m4Lvl)
       if hero.level > 20:
         mon = Monster('Big Cheese', 'Rat Mob', 40)
-      #Resets monster death buffer so a new one can spawn  
-      mon.is_dead == False
-    #Lose condition sequence break
+      # Resets monster death buffer so a new one can spawn
+      mon.is_dead = False
+    # Lose condition sequence break
     if hero.is_dead == True:
       break
-    #Encounter reset
+    # Encounter reset
     else:
       reset = True
-  #Determine what should happen if the heal command is chosen
+  # Determine what should happen if the heal command is chosen
   if fight == 'Heal':
     reset = False
     hero.use_potion()
-    #Encounter reset
+    # Encounter reset
     reset = True
+
+
