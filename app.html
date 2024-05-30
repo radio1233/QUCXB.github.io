@@ -1,313 +1,198 @@
-import random
-
-# ANSI color codes
-class Color:
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
-
-#Set up Monster class
-class Monster:
-  def __init__(self, name, clan, level):
-    self.name = name
-    self.clan = clan
-    self.level = level
-    self.health = level * 2
-    self.attack = int(round(level * 1.25, 0))
-    self.is_dead = False
-  
-  #Monster representation line
-  def __repr__(self):
-    return Color.OKBLUE + 'You are facing a level {level} {name}. {name} will deal [{dmg} damage] and has |{health}HP| left.'.format(level = self.level, name = self.name, dmg = self.attack, health = self.health) + Color.ENDC
-
-  #What should happen when a monster dies
-  def dead(self, player):
-    #Set death to True so a new monster can spawn
-    self.is_dead = True
-    if self.health != 0:
-      self.health = 0
-    #Give player a level for defeating Remy so they only will face one
-    if self.clan == 'Rat':
-      player.exp += 200
-    #Increased level progression for Skelly's so that first levels feel more rewarding  
-    if self.clan == 'Skeleton':
-      skelly = random.randint(1, 2)
-      if skelly == 1:
-        print(Color.OKGREEN + '*The enemy dropped a potion!*' + Color.ENDC)
-        player.potions += 1
-        if player.potions > 15:
-          player.potions = 15
-      player.exp += int(self.level * 20)
-    #Decreased level progression for Ogre's because they are a higher default level
-    if self.clan == 'Ogre':
-      ogre = random.randint(1, 3)
-      if ogre == 1:
-        print(Color.OKGREEN + '*The Ogre dropped 3 potions!!!*' + Color.ENDC)
-        player.potions += 3
-        if player.potions > 15:
-          player.potions = 15
-      player.exp += int(self.level * 5)
-    #Default exp gain
-    else:
-      potty = random.randint(1, 2)
-      if potty == 1:
-        print(Color.OKGREEN + '*The enemy dropped a potion!*' + Color.ENDC)
-        player.potions += 1
-        if player.potions > 15:
-          player.potions = 15
-      player.exp += int(self.level * 10)
-    print(Color.OKGREEN + '# {name} has been defeated! Your hero has gained some XP! #'.format(name = self.name) + Color.ENDC)
-    player.lvl_up()
-    
-  #What should happen when a monster takes damage
-  def take_damage(self, amount, player):
-    self.health -= amount
-    #Determine if the damage was fatal
-    if self.health <= 0:
-      self.health = 0
-      self.dead(player)
-    else:
-      print(Color.WARNING + '|{name} is down to {health}HP|'.format(name = self.name, health = self.health) + Color.ENDC)
-
-  #What should happen when a monster deals damage
-  def deal_damage(self, player):
-    dam = self.attack
-    print(Color.FAIL + '[{name} attacked {player} for {damage} damage!]'.format(name = self.name, player = player.name, damage = self.attack) + Color.ENDC)
-    player.take_damage(dam)
-
-#Set up hero class
-class Hero:
-  def __init__(self, name, weapon, level, num_potions):
-    self.name = name
-    self.weapon = weapon
-    self.level = level
-    self.health = level * 5
-    self.max_health = level * 5
-    self.potions = num_potions
-    self.attack = int(weapon[1])
-    self.exp = 0
-    self.is_dead = False
-
-  #Hero representation line
-  def __repr__(self):
-    if wep_choice == wep1:
-      return Color.OKBLUE + 'Your hero {name} is level {lvl}, currently does [{dmg} damage], and has |{health}/{maxhp}HP|.'.format(name = self.name, lvl = self.level, dmg = self.attack * int(round(self.level * .8, 0)), health = self.health, maxhp = self.max_health) + Color.ENDC
-    if wep_choice == wep2:
-      return Color.OKBLUE + 'Your hero {name} is level {lvl}, currently does [{dmg} damage], and has |{health}/{maxhp}HP|.'.format(name = self.name, lvl = self.level, dmg = self.attack * int(round(self.level * .7, 0)), health = self.health, maxhp = self.max_health) + Color.ENDC
-    if wep_choice == wep3:
-      return Color.OKBLUE + 'Your hero {name} is level {lvl}, currently does [{dmg} damage], and has |{health}/{maxhp}HP|.'.format(name = self.name, lvl = self.level, dmg = self.attack* int(round(self.level * .6, 0)), health = self.health, maxhp = self.max_health) + Color.ENDC
-
-  #What should happen when the hero dies
-  def dead(self):
-    #Set lose condition to True if the hero dies
-    self.is_dead = True
-    if self.health != 0:
-      self.health = 0
-    print('\n' + Color.FAIL + 'Oh no! Your hero {name} has been defeated! Better luck next time!'.format(name = self.name) + Color.ENDC)
-
-  #What should happen when the hero levels up
-  def lvl_up(self):
-    if self.exp >= 200:
-      self.level += 1
-      #Carry over exp incase hero has more that 100 exp
-      self.exp = self.exp - 200
-      #Increase the hero's max health and restore their HP
-      self.max_health = int(self.level * 5)
-      #Set limit on max HP
-      if self.max_health > 75:
-        self.max_health = 75
-      self.health += int(round(self.max_health * .3 , 0))
-      #Makes sure hero doesn't gain more than max HP
-      if self.health > self.max_health:
-        self.health = self.max_health
-      self.potions += 2
-      #Set limit on max potions
-      if self.potions > 15:
-        self.potions = 15
-        print(Color.OKGREEN + '*Congratulations, your hero is now level {level}!* \n{name}\'s damage and max health has been increased! \n{name} has gained 2 potions and a third of their health has been restored!'.format(level = self.level, name = self.name) + Color.ENDC)
-    else:
-      print('{name} now needs {exp} more XP to level up'.format(name = self.name, exp = int(200 - self.exp)))
-
-  #What should happen when the hero takes damage
-  def take_damage(self, amount):
-    self.health -= amount
-    #Determine if the damage was fatal
-    if self.health <= 0:
-      self.health = 0
-      self.dead()
-    else:
-      print(Color.WARNING + '|{name} is now down to {health}HP|'.format(name = self.name, health = self.health) + Color.ENDC)
-
-  #What should happen when the hero uses the block action
-  def block(self, mon):
-    amount = int(round(mon.attack / 2))
-    #Random number decides if player blocks attack
-    roll = random.randint(1, 4)
-    if roll == 1:
-      print('You have failed to block the attack.')
-      mon.deal_damage(self)
-    else:
-      self.health -= amount
-      #Check for hero death
-      if self.health <= 0:
-        self.health = 0
-        self.dead()
-      else:
-        print(Color.OKBLUE + 'You have successfully blocked the attack for [{amount} damage]. \n|{name} is now down to {health}HP.|'.format(amount = amount, name = self.name, health = self.health) + Color.ENDC)
-        #Monster rebound damage for successful block
-        mon.take_damage(amount, self)
-
-  #What should happen when the hero deals damage
-  def deal_damage(self, mon):
-    dam = 0
-    #Determines crit chance based on weapon
-    if self.weapon == wep1:
-      dam = self.attack * int(round(self.level * .8, 0))
-      crit = random.randint(1, 2)
-    elif self.weapon == wep2:
-      dam = self.attack * int(round(self.level * .7, 0))
-      crit = random.randint(1, 3)
-    elif self.weapon == wep3:
-      dam = self.attack * int(round(self.level * .6, 0))
-      crit =  random.randint(1, 10)
-    if crit == 1:
-      print(Color.FAIL + '[Critical hit!]' + Color.ENDC)
-      dam = dam * 2
-    else:
-      dam = dam
-    print(Color.FAIL + '[{name} attacked {mon} for {damage} damage!]'.format(name = self.name, mon = mon.name, damage = dam) + Color.ENDC)
-    mon.take_damage(dam, self)
-
-  #What should happen when the hero uses a potion
-  def use_potion(self):
-    if self.potions > 0:
-      self.potions -= 1
-      self.health += int(round(self.max_health * .35))
-      print('\n' + Color.OKGREEN + '{name} used a health potion'.format(name = self.name) + Color.ENDC)
-      #What should happen if healed health exceeds max health
-      if self.health >= self.max_health:
-        self.health = self.max_health
-      print(Color.WARNING + '|{name} now has {health}HP|'.format(name = self.name, health = self.health) + Color.ENDC)
-    else:
-      print('\n' + Color.WARNING + 'You are out of potions :(' + Color.ENDC)
-
-#Weapon descriptions
-wep1 = ['Dagger', 1]
-wep2 = ['Sword', 2]
-wep3 = ['Axe', 3]
-
-#Get user inputs for the hero's name and what weapon to start with
-name_input = input('\n' + Color.HEADER + 'Hello, and welcome to The Rat Game! \nWhat name would you like to give your hero? \n> ' + Color.ENDC)
-choice = input(Color.HEADER + 'Which weapon would you like your hero to take on their journey? \nType \'Dagger\'(1 damage, 50% crit chance), \'Sword\'(2 damage, 30% crit chance), or \'Axe\'(3 damage, 10% crit chance). \n> ' + Color.ENDC).title()
-while choice != 'Dagger' and choice != 'Sword' and choice != 'Axe':
-  choice = input(Color.HEADER + 'Whoops! Looks like that wasn\'t one of the choices! \nPlease type \'Dagger\'(1 damage, 50% crit chance), \'Sword\'(2 damage, 30% crit chance), or \'Axe\'(3 damage, 10% crit chance). \n> ' + Color.ENDC).title()
-if choice == 'Dagger':
-  wep_choice = wep1
-if choice == 'Sword':
-  wep_choice = wep2
-if choice == 'Axe':
-  wep_choice = wep3
-
-#Define the hero
-hero = Hero(name_input, wep_choice, 1, 2)  
-
-#Make sure first enemy is "Remy"
-if hero.level == 1:
-  mon = Monster('Remy', 'Rat', 1)
-
-#Encounter reset default value
-reset = True
-
-#Encounter commands
-while reset == True:
-  #Get user input for encounter action
-  fight = input('\n' + Color.HEADER + '{mon} \n{hero} \nWhat will you do? Type \'Attack\', \'Block\'(75% chance to reflect half damage), or \'Heal\'(Heals |{hp}HP|: You have {pot} potions). \n> '.format(mon = mon, hero = hero, hp = int(round(hero.max_health * .35, 0)), pot = hero.potions) + Color.ENDC).title()    
-  while fight != 'Attack' and fight != 'Block' and fight != 'Heal':
-    fight  = input(Color.WARNING + 'Invalid command, please try again. \n{mon} \n{hero} \nWhat will you do? Type \'Attack\'(deal [{dmg} damage]), \'Block\'(75% chance to reflect half damage), or \'Heal\'(Heals |{hp}HP|: You have {pot} potions). \n> '.format(mon = mon, hero = hero, hp = int(round(hero.max_health * .35, 0)), pot = hero.potions, dmg = hero.attack * int(hero.level)) + Color.ENDC).title()
-  #Determine what should happen if the attack command is chosen
-  if fight == 'Attack':
-    reset = False
-    #Monster buffer default value
-    mon_attack = False
-    print('\n')
-    hero.deal_damage(mon)
-    if mon.is_dead == False and mon_attack == False:
-          mon.deal_damage(hero)
-    # Ensures that a dead monster doesn't attack the hero
-    mon_attack = True
-    # Win condition
-    if mon.is_dead == True and mon.name == 'Big Cheese':
-      print(Color.OKGREEN + '******************************************************\nWOW! YOU DID IT! YOU BEAT THE BIG CHEESE! YOU WIN!!!!!\n******************************************************' + Color.ENDC)
-      break
-    # Spawns a new enemy if the current one is dead
-    while mon.is_dead == True:
-      # Determines what enemy to spawn based on hero level
-      if 1 < hero.level <= 3:
-        m1Lvl = random.randint(2, 5)
-        mon = Monster('Skelly', 'Skeleton', m1Lvl)
-      if 3 < hero.level <= 5:
-        m2Lvl = random.randint(6, 10)
-        mon = Monster('Skully', 'Skeleton', m2Lvl)
-      if 5 < hero.level <= 10:
-        m3Lvl = random.randint(15, 20)
-        mon = Monster('Grog', 'Ogre', m3Lvl)
-      if 10 < hero.level <= 20:
-        m4Lvl = random.randint(20, 40)
-        mon = Monster('Greg', 'Ogre', m4Lvl)
-      if hero.level > 20:
-        mon = Monster('Big Cheese', 'Rat Mob', 50)
-      # Resets monster death buffer so a new one can spawn
-      mon.is_dead = False
-    # Lose condition sequence break
-    if hero.is_dead == True:
-      break
-    # Encounter reset
-    else:
-      reset = True
-  # Determine what should happen if the block command is chosen
-  if fight == 'Block':
-    reset = False
-    print('\n')
-    hero.block(mon)
-    # Win condition
-    if mon.is_dead == True and mon.name == 'Big Cheese':
-      print(Color.OKGREEN + '******************************************************\nWOW! YOU DID IT! YOU BEAT THE BIG CHEESE! YOU WIN!!!!!\n******************************************************' + Color.ENDC)
-      break
-    # Spawns a new enemy if the current one is dead
-    while mon.is_dead == True:
-      # Determines what enemy to spawn based on hero level
-      if 1 < hero.level <= 5:
-        m1Lvl = random.randint(2, 5)
-        mon = Monster('Skelly', 'Skeleton', m1Lvl)
-      if 5 < hero.level <= 10:
-        m2Lvl = random.randint(6, 10)
-        mon = Monster('Skully', 'Skeleton', m2Lvl)
-      if 10 < hero.level <= 15:
-        m3Lvl = random.randint(11, 20)
-        mon = Monster('Grog', 'Ogre', m3Lvl)
-      if 15 < hero.level <= 20:
-        m4Lvl = random.randint(20, 30)
-        mon = Monster('Greg', 'Ogre', m4Lvl)
-      if hero.level > 20:
-        mon = Monster('Big Cheese', 'Rat Mob', 40)
-      # Resets monster death buffer so a new one can spawn
-      mon.is_dead = False
-    # Lose condition sequence break
-    if hero.is_dead == True:
-      break
-    # Encounter reset
-    else:
-      reset = True
-  # Determine what should happen if the heal command is chosen
-  if fight == 'Heal':
-    reset = False
-    hero.use_potion()
-    # Encounter reset
-    reset = True
+import sys
+from PyQt5.QtCore import QUrl, Qt
+from PyQt5.QtGui import QIcon, QPixmap
+from PyQt5.QtWidgets import (
+    QApplication,
+    QMainWindow,
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLineEdit,
+    QPushButton,
+    QTabWidget,
+    QToolButton,
+    QStyle,
+    QComboBox,
+    QLabel
+)
+from PyQt5.QtWebEngineWidgets import QWebEngineView
+from PyQt5.QtNetwork import QNetworkAccessManager, QNetworkRequest
 
 
+class BrowserWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+
+        self.homepage = "https://www.bing.com"
+        self.setWindowTitle("PyBrowser")
+        self.setWindowIcon(QIcon("https://img.icons8.com/ios-filled/50/000000/internet.png"))
+        self.setGeometry(100, 100, 1200, 800)
+
+        self.central_widget = QWidget()
+        self.setCentralWidget(self.central_widget)
+
+        self.layout = QVBoxLayout(self.central_widget)
+
+        self.tab_widget = QTabWidget()
+        self.tab_widget.setTabsClosable(True)
+        self.tab_widget.tabCloseRequested.connect(self.delete_tab)
+        self.layout.addWidget(self.tab_widget)
+
+        self.add_tab()
+
+        self.create_toolbar()
+        self.create_navigation_bar()
+        self.create_theme_selector()
+
+        self.load_icons()
+        self.apply_theme("Light")
+
+    def create_toolbar(self):
+        self.toolbar = QHBoxLayout()
+
+        self.back_button = QToolButton()
+        self.back_button.setIcon(self.style().standardIcon(QStyle.SP_ArrowBack))
+        self.back_button.setStatusTip("Go back to the previous page")
+        self.back_button.clicked.connect(self.go_back)
+        self.toolbar.addWidget(self.back_button)
+
+        self.forward_button = QToolButton()
+        self.forward_button.setIcon(self.style().standardIcon(QStyle.SP_ArrowForward))
+        self.forward_button.setStatusTip("Go forward to the next page")
+        self.forward_button.clicked.connect(self.go_forward)
+        self.toolbar.addWidget(self.forward_button)
+
+        self.reload_button = QToolButton()
+        self.reload_button.setIcon(self.style().standardIcon(QStyle.SP_BrowserReload))
+        self.reload_button.setStatusTip("Reload the current page")
+        self.reload_button.clicked.connect(self.reload_page)
+        self.toolbar.addWidget(self.reload_button)
+
+        self.new_tab_button = QToolButton()
+        self.new_tab_button.setStatusTip("Open a new tab")
+        self.new_tab_button.clicked.connect(self.add_tab)
+        self.toolbar.addWidget(self.new_tab_button)
+
+        self.del_tab_button = QToolButton()
+        self.del_tab_button.setStatusTip("Close the current tab")
+        self.del_tab_button.clicked.connect(self.delete_tab)
+        self.toolbar.addWidget(self.del_tab_button)
+
+        self.toolbar.addStretch()
+        self.layout.addLayout(self.toolbar)
+
+    def create_navigation_bar(self):
+        navigation_bar = QHBoxLayout()
+
+        self.address_bar = QLineEdit()
+        self.address_bar.setPlaceholderText("Enter URL and press Enter...")
+        self.address_bar.returnPressed.connect(self.navigate)
+        navigation_bar.addWidget(self.address_bar)
+
+        self.go_button = QPushButton("Go")
+        self.go_button.setStatusTip("Navigate to the URL in the address bar")
+        self.go_button.clicked.connect(self.navigate)
+        navigation_bar.addWidget(self.go_button)
+
+        navigation_bar.addStretch()
+        self.layout.addLayout(navigation_bar)
+
+    def create_theme_selector(self):
+        theme_bar = QHBoxLayout()
+        theme_label = QLabel("Theme:")
+        self.theme_selector = QComboBox()
+        self.theme_selector.addItems(["Light", "Dark", "Blue"])
+        self.theme_selector.currentTextChanged.connect(self.apply_theme)
+        theme_bar.addWidget(theme_label)
+        theme_bar.addWidget(self.theme_selector)
+
+        theme_bar.addStretch()
+        self.layout.addLayout(theme_bar)
+
+    def apply_theme(self, theme):
+        if theme == "Light":
+            self.setStyleSheet("QMainWindow { background-color: white; }"
+                               "QLineEdit { background-color: white; color: black; border: 1px solid #ccc; border-radius: 5px; padding: 5px; }"
+                               "QToolButton { background-color: white; color: black; border: none; padding: 5px; }"
+                               "QPushButton { background-color: #f0f0f0; color: black; border: 1px solid #ccc; border-radius: 5px; padding: 5px; }"
+                               "QTabWidget::pane { border-top: 2px solid #ccc; }"
+                               "QTabBar::tab { background: white; border: 1px solid #ccc; padding: 10px; border-top-left-radius: 5px; border-top-right-radius: 5px; }"
+                               "QTabBar::tab:selected { background: #f0f0f0; }")
+        elif theme == "Dark":
+            self.setStyleSheet("QMainWindow { background-color: #2b2b2b; }"
+                               "QLineEdit { background-color: #3c3f41; color: white; border: 1px solid #555; border-radius: 5px; padding: 5px; }"
+                               "QToolButton { background-color: #3c3f41; color: white; border: none; padding: 5px; }"
+                               "QPushButton { background-color: #555; color: white; border: 1px solid #666; border-radius: 5px; padding: 5px; }"
+                               "QTabWidget::pane { border-top: 2px solid #555; }"
+                               "QTabBar::tab { background: #3c3f41; border: 1px solid #555; padding: 10px; border-top-left-radius: 5px; border-top-right-radius: 5px; }"
+                               "QTabBar::tab:selected { background: #555; }")
+        elif theme == "Blue":
+            self.setStyleSheet("QMainWindow { background-color: #add8e6; }"
+                               "QLineEdit { background-color: #87ceeb; color: black; border: 1px solid #007acc; border-radius: 5px; padding: 5px; }"
+                               "QToolButton { background-color: #87ceeb; color: black; border: none; padding: 5px; }"
+                               "QPushButton { background-color: #b0e0e6; color: black; border: 1px solid #007acc; border-radius: 5px; padding: 5px; }"
+                               "QTabWidget::pane { border-top: 2px solid #007acc; }"
+                               "QTabBar::tab { background: #87ceeb; border: 1px solid #007acc; padding: 10px; border-top-left-radius: 5px; border-top-right-radius: 5px; }"
+                               "QTabBar::tab:selected { background: #b0e0e6; }")
+
+    def add_tab(self):
+        web_view = QWebEngineView()
+        web_view.load(QUrl(self.homepage))
+        index = self.tab_widget.addTab(web_view, "New Tab")
+        self.tab_widget.setCurrentIndex(index)
+        web_view.urlChanged.connect(self.update_address_bar)
+
+    def delete_tab(self, index=None):
+        if index is None:
+            index = self.tab_widget.currentIndex()
+        if self.tab_widget.count() > 1:
+            self.tab_widget.removeTab(index)
+
+    def update_address_bar(self, url):
+        index = self.tab_widget.currentIndex()
+        if index >= 0:
+            self.address_bar.setText(url.toString())
+
+    def navigate(self):
+        index = self.tab_widget.currentIndex()
+        web_view = self.tab_widget.widget(index)
+        url = self.address_bar.text()
+        if not url.startswith("http"):
+            url = "http://" + url
+        web_view.load(QUrl(url))
+
+    def go_back(self):
+        index = self.tab_widget.currentIndex()
+        web_view = self.tab_widget.widget(index)
+        web_view.back()
+
+    def go_forward(self):
+        index = self.tab_widget.currentIndex()
+        web_view = self.tab_widget.widget(index)
+        web_view.forward()
+
+    def reload_page(self):
+        index = self.tab_widget.currentIndex()
+        web_view = self.tab_widget.widget(index)
+        web_view.reload()
+
+    def load_icons(self):
+        self.set_icon(self.new_tab_button, "https://img.icons8.com/ios-filled/50/000000/add.png")
+        self.set_icon(self.del_tab_button, "https://img.icons8.com/ios-filled/50/000000/delete-sign.png")
+
+    def set_icon(self, button, url):
+        manager = QNetworkAccessManager(self)
+        manager.finished.connect(lambda reply, button=button: self.on_icon_downloaded(reply, button))
+        manager.get(QNetworkRequest(QUrl(url)))
+
+    def on_icon_downloaded(self, reply, button):
+        pixmap = QPixmap()
+        pixmap.loadFromData(reply.readAll())
+        button.setIcon(QIcon(pixmap))
+
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    window = BrowserWindow()
+    window.show()
+    sys.exit(app.exec_())
