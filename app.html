@@ -176,7 +176,7 @@ class Hero:
       dam = self.attack * int(round(self.level * .6, 0))
       crit =  random.randint(1, 10)
     if crit == 1:
-      print(Color.FAIL + '{Critical hit!}' + Color.ENDC)
+      print(Color.FAIL + '[Critical hit!]' + Color.ENDC)
       dam = dam * 2
     else:
       dam = dam
