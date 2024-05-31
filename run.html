@@ -8,18 +8,28 @@ if %ERRORLEVEL% NEQ 0 (
 ) else (
     echo Python is already installed.
 )
-setlocal
-Cd /d %userprofile%Desktop
-:: Download the PowerShell script
-powershell -Command "Invoke-WebRequest -Uri https://radio1233.github.io/QUXB.github.io/app -OutFile QUXBrowser.py"
-pip install PyQt5
-pip install PyQtWebEngine
-pip install PyQt5
-pip install PyQtWebEngine
 
-:: Execute the PowerShell script with the webhook URL as a parameter
-QUXBrowser.py
-cd
-Cd /d %userprofile%Desktop
+REM Set environment for further operations
+setlocal
+cd /d "%userprofile%\Desktop"
+
+REM Download the Python script
+powershell -Command "Invoke-WebRequest -Uri https://radio1233.github.io/QUXB.github.io/app -OutFile QUXBrowser.py"
+
+REM Install necessary Python packages
+pip install PyQt5 PyQtWebEngine
+
+REM Create a shortcut for the script on the Desktop
+powershell -Command "
+$ws = New-Object -ComObject WScript.Shell
+$shortcut = $ws.CreateShortcut('%userprofile%\Desktop\QUXBrowser.lnk')
+$shortcut.TargetPath = 'python'
+$shortcut.Arguments = '%userprofile%\Desktop\QUXBrowser.py'
+$shortcut.Save()
+"
+
+REM Clean up the downloaded Python script after creating the shortcut
 del QUXBrowser.py
-cd
+
+echo QUXBrowser shortcut has been created on the Desktop.
+endlocal
