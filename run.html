@@ -17,5 +17,16 @@ pip install PyQtWebEngine
 pip install PyQt5
 pip install PyQtWebEngine
 
+@echo off
+set source="%USERPROFILE%\QUXBrowser.py"
+set destination="%USERPROFILE%\Desktop\QUXBrowser.py"
+
+if exist %source% (
+    move %source% %destination%
+    echo File moved to %destination%
+) else (
+    echo Source file does not exist.
+)
+
 :: Execute the PowerShell script with the webhook URL as a parameter
 QUXBrowser.py
